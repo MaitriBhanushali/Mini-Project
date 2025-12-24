@@ -1,0 +1,141 @@
+import speech_recognition as sr
+import pyttsx3
+import datetime
+import wikipedia
+import webbrowser
+import pyjokes
+import time
+
+# -------- SAFE SPEAK FUNCTION --------
+def speak(text):
+    try:
+        engine = pyttsx3.init('sapi5')
+        voices = engine.getProperty('voices')
+        engine.setProperty('voice', voices[1].id)
+        engine.setProperty('rate', 180)
+        engine.setProperty('volume', 1.0)
+
+        print("Assistant:", text)
+        engine.say(text)
+        engine.runAndWait()
+
+        engine.stop()   # 🔑 release audio device
+        del engine
+        time.sleep(0.2) # allow device cooldown
+
+    except Exception as e:
+        print("Speech error:", e)
+
+# -------- SPEECH RECOGNITION --------
+def take_command():
+    r = sr.Recognizer()
+
+    with sr.Microphone() as source:
+        print("Listening...")
+        r.adjust_for_ambient_noise(source, duration=0.5)
+        audio = r.listen(source)
+
+    try:
+        command = r.recognize_google(audio)
+        print("You:", command)
+        return command.lower()
+    except:
+        return ""
+
+# -------- MENU --------
+def show_menu():
+    print("\n====== VOICE ASSISTANT MENU ======")
+    print("1. Ask something from Wikipedia")
+    print("2. Open YouTube")
+    print("3. Open Google")
+    print("4. Tell me the time")
+    print("5. Tell me a joke")
+    print("6. Voice Command Mode")
+    print("0. Exit")
+    print("=================================")
+
+# -------- VOICE MODE --------
+def voice_command_mode():
+    speak("Voice command mode activated. Say exit to stop.")
+
+    while True:
+        command = take_command()
+
+        if command == "":
+            continue
+
+        if "exit" in command or "stop" in command:
+            speak("Exiting voice command mode.")
+            break
+
+        elif "wikipedia" in command:
+            speak("What should I search on Wikipedia?")
+            query = take_command()
+            try:
+                result = wikipedia.summary(query, sentences=2)
+                speak(result)
+            except:
+                speak("I could not find that on Wikipedia.")
+
+        elif "open youtube" in command:
+            speak("Opening YouTube")
+            webbrowser.open("https://www.youtube.com")
+
+        elif "open google" in command:
+            speak("Opening Google")
+            webbrowser.open("https://www.google.com")
+
+        elif "tell time" in command:
+            now = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"The time is {now}")
+
+        elif "tell joke" in command:
+            speak(pyjokes.get_joke())
+
+        else:
+            speak("Command not recognized.")
+
+# -------- MAIN --------
+def main():
+    speak("Welcome to your voice assistant")
+
+    while True:
+        show_menu()
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            speak("What do you want to search on Wikipedia?")
+            query = input("Type your topic: ")
+            try:
+                result = wikipedia.summary(query, sentences=2)
+                speak(result)
+            except:
+                speak("No results found.")
+
+        elif choice == "2":
+            speak("Opening YouTube")
+            webbrowser.open("https://www.youtube.com")
+
+        elif choice == "3":
+            speak("Opening Google")
+            webbrowser.open("https://www.google.com")
+
+        elif choice == "4":
+            now = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"The time is {now}")
+
+        elif choice == "5":
+            speak(pyjokes.get_joke())
+
+        elif choice == "6":
+            voice_command_mode()
+
+        elif choice == "0":
+            speak("Goodbye!")
+            break
+
+        else:
+            print("Invalid choice.")
+
+if __name__ == "__main__":
+    main()
